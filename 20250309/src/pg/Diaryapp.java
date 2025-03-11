@@ -33,7 +33,7 @@ class DiaryEntry {
     // 日記エントリを表示するためのtoStringメソッド
     @Override
     public String toString() {
-        return "Date: " + date + "\n" + "Content: " + content;
+        return "日付: " + date + "\n" + "内容: " + content;
     }
 }
 
@@ -48,13 +48,13 @@ public class Diaryapp {
     public static void main(String[] args) {
         // メニューを表示して、ユーザーの選択を受け付ける
         while (true) {
-            System.out.println("\nDiary Application");
-            System.out.println("1. Add Diary Entry");
-            System.out.println("2. View All Entries");
-            System.out.println("3. Edit Diary Entry");
-            System.out.println("4. Delete Diary Entry");
-            System.out.println("5. Exit");
-            System.out.print("Choose an option: ");
+            System.out.println("\n日記アプリケーション");
+            System.out.println("1. 日記を追加");
+            System.out.println("2. すべての日記を表示");
+            System.out.println("3. 日記を編集");
+            System.out.println("4. 日記を削除");
+            System.out.println("5. 終了");
+            System.out.print("オプションを選んでください: ");
             int option = scanner.nextInt();
             scanner.nextLine(); // 改行コードを消費
 
@@ -73,31 +73,31 @@ public class Diaryapp {
                     deleteDiaryEntry(); // 日記を削除
                     break;
                 case 5:
-                    System.out.println("Exiting the Diary Application.");
+                    System.out.println("日記アプリケーションを終了します。");
                     return; // アプリケーション終了
                 default:
-                    System.out.println("Invalid option. Try again."); // 無効な選択肢
+                    System.out.println("無効なオプションです。もう一度選んでください。"); // 無効な選択肢
             }
         }
     }
 
     // 日記を追加するメソッド
     private static void addDiaryEntry() {
-        System.out.print("Enter date (YYYY-MM-DD): ");
+        System.out.print("日付を入力してください (YYYY-MM-DD): ");
         String date = scanner.nextLine(); // 日付の入力を受け取る
-        System.out.print("Enter content: ");
+        System.out.print("内容を入力してください: ");
         String content = scanner.nextLine(); // 内容の入力を受け取る
 
         // DiaryEntryオブジェクトを作成し、リストに追加
         DiaryEntry entry = new DiaryEntry(date, content);
         diaryEntries.add(entry);
-        System.out.println("Diary entry added successfully!");
+        System.out.println("日記が追加されました！");
     }
 
     // すべての日記エントリを表示するメソッド
     private static void viewAllEntries() {
         if (diaryEntries.isEmpty()) { // 日記がない場合
-            System.out.println("No diary entries available.");
+            System.out.println("保存されている日記はありません。");
             return;
         }
 
@@ -109,34 +109,34 @@ public class Diaryapp {
 
     // 日記を編集するメソッド
     private static void editDiaryEntry() {
-        System.out.print("Enter the date of the entry you want to edit (YYYY-MM-DD): ");
+        System.out.print("編集したい日記の日付を入力してください (YYYY-MM-DD): ");
         String date = scanner.nextLine(); // 編集したい日記の日付を入力
 
         // 日付に一致する日記を検索
         DiaryEntry entry = findDiaryEntryByDate(date);
         if (entry != null) {
             // 内容の更新を受け取る
-            System.out.print("Enter new content: ");
+            System.out.print("新しい内容を入力してください: ");
             String newContent = scanner.nextLine();
             entry.setContent(newContent); // 内容を更新
-            System.out.println("Diary entry updated successfully!");
+            System.out.println("日記が更新されました！");
         } else {
-            System.out.println("Entry not found for the given date.");
+            System.out.println("指定された日付の日記は見つかりませんでした。");
         }
     }
 
     // 日記を削除するメソッド
     private static void deleteDiaryEntry() {
-        System.out.print("Enter the date of the entry you want to delete (YYYY-MM-DD): ");
+        System.out.print("削除したい日記の日付を入力してください (YYYY-MM-DD): ");
         String date = scanner.nextLine(); // 削除したい日記の日付を入力
 
         // 日付に一致する日記を検索
         DiaryEntry entry = findDiaryEntryByDate(date);
         if (entry != null) {
             diaryEntries.remove(entry); // 日記をリストから削除
-            System.out.println("Diary entry deleted successfully!");
+            System.out.println("日記が削除されました！");
         } else {
-            System.out.println("Entry not found for the given date.");
+            System.out.println("指定された日付の日記は見つかりませんでした。");
         }
     }
 
