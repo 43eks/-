@@ -4,21 +4,19 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JList;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
@@ -27,20 +25,20 @@ import javax.swing.SwingUtilities;
 
 public class TodoappGUI {
     private JFrame frame;
-    private DefaultListModel<JPanel> todoListModel;
-    private JList<JPanel> todoList;
     private JTextField taskField;
-    private List<String> tasks;
-    
+    private JList<Task> todoList;
+    private DefaultListModel<Task> todoListModel;
+    private List<Task> tasks;
+
     public TodoappGUI() {
-        tasks = loadTasks();  // アプリ起動時にタスクをロード
+        tasks = loadTasksFromFile();  // アプリ起動時にタスクをロード
         frame = new JFrame("Todoリストアプリ");
         frame.setSize(400, 400);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
 
         // タスクリストを表示するためのリストモデルとJList
-        todoListModel = new DefaultListModel<>();
+        todoListModel = new DefaultListModel<>();  // 初期化
         todoList = new JList<>(todoListModel);
         todoList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
@@ -65,118 +63,114 @@ public class TodoappGUI {
         });
         buttonPanel.add(addButton);
 
+        // 「完了」ボタン
+        JButton completeButton = new JButton("タスクを完了");
+        completeButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                markTaskAsCompleted();
+            }
+        });
+        buttonPanel.add(completeButton);
+
+        // 「保存」ボタン
+        JButton saveButton = new JButton("タスクを保存");
+        saveButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                saveTasksToFile();
+            }
+        });
+        buttonPanel.add(saveButton);
+
         frame.add(buttonPanel, BorderLayout.SOUTH);
+
+        // 既存のタスクをロード
+        loadTasks();
     }
 
-    // タスクを追加
-    private void addTask() {
-        String task = taskField.getText().trim();
-        if (!task.isEmpty()) {
-            JPanel taskPanel = new JPanel();
-            taskPanel.setLayout(new BorderLayout());
-
-            JCheckBox checkBox = new JCheckBox(task);
-            checkBox.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    markAsComplete(checkBox);
-                }
-            });
-            taskPanel.add(checkBox, BorderLayout.CENTER);
-
-            JButton removeButton = new JButton("削除");
-            removeButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    removeTask(taskPanel);
-                }
-            });
-            taskPanel.add(removeButton, BorderLayout.EAST);
-
-            todoListModel.addElement(taskPanel);
-            tasks.add(task);
-            taskField.setText("");  // 入力フィールドをクリア
-            saveTasks();  // タスクを保存
-        } else {
-            JOptionPane.showMessageDialog(frame, "タスクを入力してください。");
+    private void loadTasks() {
+        todoListModel.clear();  // 既存のタスクをクリア
+        for (Task task : tasks) {
+            todoListModel.addElement(task);  // タスクをリストに追加
         }
     }
 
-    // 完了/未完了を管理
-    private void markAsComplete(JCheckBox checkBox) {
+    private void addTask() {
+        String taskName = taskField.getText().trim();
+        if (!taskName.isEmpty()) {
+            Task task = new Task(taskName);
+            tasks.add(task);
+            todoListModel.addElement(task);
+            taskField.setText("");
+            saveTasksToFile();  // タスクをファイルに保存
+        }
+    }
+
+    private void markTaskAsCompleted() {
         int selectedIndex = todoList.getSelectedIndex();
         if (selectedIndex != -1) {
-            if (checkBox.isSelected()) {
-                checkBox.setText("[完了] " + checkBox.getText());
-            } else {
-                checkBox.setText(checkBox.getText().replace("[完了] ", ""));
-            }
-            saveTasks();  // タスクを保存
+            Task selectedTask = todoListModel.getElementAt(selectedIndex);
+            selectedTask.setCompleted(true);  // タスクを完了に設定
+            todoList.repaint();  // JListを再描画
+            saveTasksToFile();  // タスクをファイルに保存
         }
     }
 
-    // タスクを削除
-    private void removeTask(JPanel taskPanel) {
-        todoListModel.removeElement(taskPanel);
-        tasks.remove(todoListModel.indexOf(taskPanel));  // リストから削除
-        saveTasks();  // タスクを保存
-    }
-
-    // タスクをファイルに保存
-    private void saveTasks() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("tasks.txt"))) {
-            for (String task : tasks) {
-                writer.write(task);
-                writer.newLine();
-            }
+    private void saveTasksToFile() {
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("tasks.dat"))) {
+            out.writeObject(tasks);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    // 起動時にタスクをファイルからロード
-    private List<String> loadTasks() {
-        List<String> loadedTasks = new ArrayList<>();
-        File file = new File("tasks.txt");
-        if (file.exists()) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    loadedTasks.add(line);
-                    JCheckBox checkBox = new JCheckBox(line);
-                    todoListModel.addElement(createTaskPanel(checkBox));
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    private List<Task> loadTasksFromFile() {
+        List<Task> loadedTasks = new ArrayList<>();
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("tasks.dat"))) {
+            loadedTasks = (List<Task>) in.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            // ファイルが存在しない場合や読み込みエラーを無視
+            e.printStackTrace();
         }
         return loadedTasks;
-    }
-
-    private JPanel createTaskPanel(JCheckBox checkBox) {
-        JPanel taskPanel = new JPanel();
-        taskPanel.setLayout(new BorderLayout());
-        taskPanel.add(checkBox, BorderLayout.CENTER);
-
-        JButton removeButton = new JButton("削除");
-        removeButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                removeTask(taskPanel);
-            }
-        });
-        taskPanel.add(removeButton, BorderLayout.EAST);
-
-        return taskPanel;
     }
 
     public void display() {
         frame.setVisible(true);
     }
 
+    // Taskクラス（タスクの情報を保持）
+    public static class Task implements Serializable {
+        private String name;
+        private boolean isCompleted;
+
+        public Task(String name) {
+            this.name = name;
+            this.isCompleted = false;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public boolean isCompleted() {
+            return isCompleted;
+        }
+
+        public void setCompleted(boolean completed) {
+            isCompleted = completed;
+        }
+
+        @Override
+        public String toString() {
+            return (isCompleted ? "[完了]" : "[未完了]") + " " + name;
+        }
+    }
+
     public static void main(String[] args) {
-        // EDTでUIの初期化を行う
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                TodoappGUI app = new TodoappGUI();
-                app.display();
+                TodoappGUI todoApp = new TodoappGUI();
+                todoApp.display();
             }
         });
     }
