@@ -23,6 +23,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 
 public class TodoappGUI {
     private JFrame frame;
@@ -171,7 +172,12 @@ public class TodoappGUI {
     }
 
     public static void main(String[] args) {
-        TodoappGUI app = new TodoappGUI();
-        app.display();
+        // EDTでUIの初期化を行う
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                TodoappGUI app = new TodoappGUI();
+                app.display();
+            }
+        });
     }
 }
