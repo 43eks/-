@@ -15,6 +15,7 @@ import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -25,8 +26,8 @@ import javax.swing.ListSelectionModel;
 
 public class TodoappGUI {
     private JFrame frame;
-    private DefaultListModel<String> todoListModel;
-    private JList<String> todoList;
+    private DefaultListModel<JPanel> todoListModel;
+    private JList<JPanel> todoList;
     private JTextField taskField;
     private List<String> tasks;
     
@@ -63,32 +64,34 @@ public class TodoappGUI {
         });
         buttonPanel.add(addButton);
 
-        // 「削除」ボタン
-        JButton removeButton = new JButton("タスクを削除");
-        removeButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                removeTask();
-            }
-        });
-        buttonPanel.add(removeButton);
-
-        // 「完了」ボタン
-        JButton completeButton = new JButton("完了/未完了");
-        completeButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                markAsComplete();
-            }
-        });
-        buttonPanel.add(completeButton);
-
         frame.add(buttonPanel, BorderLayout.SOUTH);
     }
 
+    // タスクを追加
     private void addTask() {
         String task = taskField.getText().trim();
         if (!task.isEmpty()) {
+            JPanel taskPanel = new JPanel();
+            taskPanel.setLayout(new BorderLayout());
+
+            JCheckBox checkBox = new JCheckBox(task);
+            checkBox.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    markAsComplete(checkBox);
+                }
+            });
+            taskPanel.add(checkBox, BorderLayout.CENTER);
+
+            JButton removeButton = new JButton("削除");
+            removeButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    removeTask(taskPanel);
+                }
+            });
+            taskPanel.add(removeButton, BorderLayout.EAST);
+
+            todoListModel.addElement(taskPanel);
             tasks.add(task);
-            todoListModel.addElement(task);
             taskField.setText("");  // 入力フィールドをクリア
             saveTasks();  // タスクを保存
         } else {
@@ -96,32 +99,27 @@ public class TodoappGUI {
         }
     }
 
-    private void removeTask() {
+    // 完了/未完了を管理
+    private void markAsComplete(JCheckBox checkBox) {
         int selectedIndex = todoList.getSelectedIndex();
         if (selectedIndex != -1) {
-            tasks.remove(selectedIndex);  // 選択したタスクを削除
-            todoListModel.remove(selectedIndex);  // リストからも削除
+            if (checkBox.isSelected()) {
+                checkBox.setText("[完了] " + checkBox.getText());
+            } else {
+                checkBox.setText(checkBox.getText().replace("[完了] ", ""));
+            }
             saveTasks();  // タスクを保存
-        } else {
-            JOptionPane.showMessageDialog(frame, "削除するタスクを選択してください。");
         }
     }
 
-    private void markAsComplete() {
-        int selectedIndex = todoList.getSelectedIndex();
-        if (selectedIndex != -1) {
-            String task = todoListModel.get(selectedIndex);
-            String markedTask = task.startsWith("[完了] ") ? task.substring(5) : "[完了] " + task;
-            todoListModel.set(selectedIndex, markedTask);  // リスト内のタスクを更新
-
-            // 完了マークをファイルに反映
-            tasks.set(selectedIndex, markedTask);
-            saveTasks();
-        } else {
-            JOptionPane.showMessageDialog(frame, "完了/未完了にするタスクを選択してください。");
-        }
+    // タスクを削除
+    private void removeTask(JPanel taskPanel) {
+        todoListModel.removeElement(taskPanel);
+        tasks.remove(todoListModel.indexOf(taskPanel));  // リストから削除
+        saveTasks();  // タスクを保存
     }
 
+    // タスクをファイルに保存
     private void saveTasks() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("tasks.txt"))) {
             for (String task : tasks) {
@@ -133,6 +131,7 @@ public class TodoappGUI {
         }
     }
 
+    // 起動時にタスクをファイルからロード
     private List<String> loadTasks() {
         List<String> loadedTasks = new ArrayList<>();
         File file = new File("tasks.txt");
@@ -141,13 +140,30 @@ public class TodoappGUI {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     loadedTasks.add(line);
-                    todoListModel.addElement(line);  // リストに追加
+                    JCheckBox checkBox = new JCheckBox(line);
+                    todoListModel.addElement(createTaskPanel(checkBox));
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
         return loadedTasks;
+    }
+
+    private JPanel createTaskPanel(JCheckBox checkBox) {
+        JPanel taskPanel = new JPanel();
+        taskPanel.setLayout(new BorderLayout());
+        taskPanel.add(checkBox, BorderLayout.CENTER);
+
+        JButton removeButton = new JButton("削除");
+        removeButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                removeTask(taskPanel);
+            }
+        });
+        taskPanel.add(removeButton, BorderLayout.EAST);
+
+        return taskPanel;
     }
 
     public void display() {
