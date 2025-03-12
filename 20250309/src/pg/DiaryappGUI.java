@@ -31,7 +31,8 @@ public class DiaryappGUI {
     private JTextArea diaryContent;
     private Map<String, List<DiaryEntry>> diaryMap1 = new HashMap<>();
     private static final String FILE_NAME = "diary.txt";
-	static class DiaryEntry {
+
+    static class DiaryEntry {
         String date;
         String content;
 
@@ -42,48 +43,53 @@ public class DiaryappGUI {
     }
 
     public DiaryappGUI() {
-        frame = new JFrame("📔 月別日記アプリ");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 400);
-        frame.setLayout(new BorderLayout());
+        try {
+            frame = new JFrame("📔 月別日記アプリ");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(600, 400);
+            frame.setLayout(new BorderLayout());
 
-        // 📅 ツリー構造の作成
-        root = new DefaultMutableTreeNode("日記一覧");
-        treeModel = new DefaultTreeModel(root);
-        diaryTree = new JTree(treeModel);
-        diaryTree.addTreeSelectionListener(e -> displaySelectedDiary());
+            // 📅 ツリー構造の作成
+            root = new DefaultMutableTreeNode("日記一覧");
+            treeModel = new DefaultTreeModel(root);
+            diaryTree = new JTree(treeModel);
+            diaryTree.addTreeSelectionListener(e -> displaySelectedDiary());
 
-        JScrollPane treeScrollPane = new JScrollPane(diaryTree);
+            JScrollPane treeScrollPane = new JScrollPane(diaryTree);
 
-        // 📖 日記の内容表示エリア
-        diaryContent = new JTextArea();
-        diaryContent.setLineWrap(true);
-        diaryContent.setWrapStyleWord(true);
-        JScrollPane textScrollPane = new JScrollPane(diaryContent);
+            // 📖 日記の内容表示エリア
+            diaryContent = new JTextArea();
+            diaryContent.setLineWrap(true);
+            diaryContent.setWrapStyleWord(true);
+            JScrollPane textScrollPane = new JScrollPane(diaryContent);
 
-        // 🛠 ボタンパネル
-        JButton addButton = new JButton("追加");
-        addButton.addActionListener(e -> addDiaryEntry());
+            // 🛠 ボタンパネル
+            JButton addButton = new JButton("追加");
+            addButton.addActionListener(e -> addDiaryEntry());
 
-        JButton deleteButton = new JButton("削除");
-        deleteButton.addActionListener(e -> deleteDiaryEntry());
+            JButton deleteButton = new JButton("削除");
+            deleteButton.addActionListener(e -> deleteDiaryEntry());
 
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(addButton);
-        buttonPanel.add(deleteButton);
+            JPanel buttonPanel = new JPanel();
+            buttonPanel.add(addButton);
+            buttonPanel.add(deleteButton);
 
-        // 📦 レイアウト設定
-        frame.add(treeScrollPane, BorderLayout.WEST);
-        frame.add(textScrollPane, BorderLayout.CENTER);
-        frame.add(buttonPanel, BorderLayout.SOUTH);
+            // 📦 レイアウト設定
+            frame.add(treeScrollPane, BorderLayout.WEST);
+            frame.add(textScrollPane, BorderLayout.CENTER);
+            frame.add(buttonPanel, BorderLayout.SOUTH);
 
-        // ファイルから日記を読み込む
-        loadDiaryFromFile();
+            // ファイルから日記を読み込む
+            loadDiaryFromFile();
 
-        frame.setVisible(true);
+            System.out.println("フレーム表示処理実行");
+            frame.setVisible(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "UIの初期化中にエラーが発生しました", "エラー", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
-    // 📖 選択した日記を表示
     private void displaySelectedDiary() {
         DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) diaryTree.getLastSelectedPathComponent();
         if (selectedNode == null || selectedNode.getParent() == root) return; // 月は無視
@@ -97,7 +103,6 @@ public class DiaryappGUI {
         }
     }
 
-    // ➕ 日記を追加
     private void addDiaryEntry() {
         String date = JOptionPane.showInputDialog(frame, "📅 日付を入力 (例: 2025-03-12):");
         if (date == null || date.trim().isEmpty()) return;
@@ -115,7 +120,6 @@ public class DiaryappGUI {
         saveDiaryToFile();
     }
 
-    // ❌ 日記を削除
     private void deleteDiaryEntry() {
         DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) diaryTree.getLastSelectedPathComponent();
         if (selectedNode == null || selectedNode.getParent() == root) return;
@@ -131,7 +135,6 @@ public class DiaryappGUI {
         }
     }
 
-    // 📅 日記をツリーに追加
     private void updateTree() {
         root.removeAllChildren();
 
@@ -146,7 +149,6 @@ public class DiaryappGUI {
         treeModel.reload();
     }
 
-    // 🔄 ファイルから日記を読み込む
     private void loadDiaryFromFile() {
         try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
             String line;
@@ -169,7 +171,6 @@ public class DiaryappGUI {
         }
     }
 
-    // 💾 日記をファイルに保存
     private void saveDiaryToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME))) {
             for (List<DiaryEntry> entries : diaryMap1.values()) {
@@ -183,12 +184,12 @@ public class DiaryappGUI {
         }
     }
 
-    // 🏷 日付から「YYYY-MM」形式を取得
     private String getYearMonth(String date) {
         return date.substring(0, 7); // "2025-03-12" → "2025-03"
     }
 
     public static void main(String[] args) {
+        System.out.println("アプリを起動します");
         SwingUtilities.invokeLater(DiaryappGUI::new);
     }
 }
