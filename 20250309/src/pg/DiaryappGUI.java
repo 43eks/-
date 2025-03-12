@@ -29,7 +29,7 @@ public class DiaryappGUI {
     private DefaultMutableTreeNode root;
     private DefaultTreeModel treeModel;
     private JTextArea diaryContent;
-    private Map<String, List<DiaryEntry>> diaryMap = new HashMap<>();
+    private Map<String, List<DiaryEntry>> diaryMap1 = new HashMap<>();
     private static final String FILE_NAME = "diary.txt";
 	private static final HashMap<Object, Object> diaryMap = null;
 
@@ -91,7 +91,7 @@ public class DiaryappGUI {
         if (selectedNode == null || selectedNode.getParent() == root) return; // 月は無視
 
         String date = selectedNode.toString();
-        for (DiaryEntry entry : diaryMap.getOrDefault(getYearMonth(date), new ArrayList<>())) {
+        for (DiaryEntry entry : diaryMap1.getOrDefault(getYearMonth(date), new ArrayList<>())) {
             if (entry.date.equals(date)) {
                 diaryContent.setText(entry.content);
                 break;
@@ -110,8 +110,8 @@ public class DiaryappGUI {
         DiaryEntry newEntry = new DiaryEntry(date, content);
         String yearMonth = getYearMonth(date);
 
-        diaryMap.putIfAbsent(yearMonth, new ArrayList<>());
-        diaryMap.get(yearMonth).add(newEntry);
+        diaryMap1.putIfAbsent(yearMonth, new ArrayList<>());
+        diaryMap1.get(yearMonth).add(newEntry);
 
         updateTree();
         saveDiaryToFile();
@@ -125,8 +125,8 @@ public class DiaryappGUI {
         String date = selectedNode.toString();
         String yearMonth = getYearMonth(date);
 
-        if (diaryMap.containsKey(yearMonth)) {
-            diaryMap.get(yearMonth).removeIf(entry -> entry.date.equals(date));
+        if (diaryMap1.containsKey(yearMonth)) {
+            diaryMap1.get(yearMonth).removeIf(entry -> entry.date.equals(date));
             updateTree();
             saveDiaryToFile();
             diaryContent.setText("");
@@ -137,9 +137,9 @@ public class DiaryappGUI {
     private void updateTree() {
         root.removeAllChildren();
 
-        for (String yearMonth : diaryMap.keySet()) {
+        for (String yearMonth : diaryMap1.keySet()) {
             DefaultMutableTreeNode monthNode = new DefaultMutableTreeNode(yearMonth);
-            for (DiaryEntry entry : diaryMap.get(yearMonth)) {
+            for (DiaryEntry entry : diaryMap1.get(yearMonth)) {
                 monthNode.add(new DefaultMutableTreeNode(entry.date));
             }
             root.add(monthNode);
@@ -159,8 +159,8 @@ public class DiaryappGUI {
                     String content = parts[1];
                     String yearMonth = getYearMonth(date);
 
-                    diaryMap.putIfAbsent(yearMonth, new ArrayList<>());
-                    diaryMap.get(yearMonth).add(new DiaryEntry(date, content));
+                    diaryMap1.putIfAbsent(yearMonth, new ArrayList<>());
+                    diaryMap1.get(yearMonth).add(new DiaryEntry(date, content));
                 }
             }
             updateTree();
@@ -174,7 +174,7 @@ public class DiaryappGUI {
     // 💾 日記をファイルに保存
     private void saveDiaryToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME))) {
-            for (List<DiaryEntry> entries : diaryMap.values()) {
+            for (List<DiaryEntry> entries : diaryMap1.values()) {
                 for (DiaryEntry entry : entries) {
                     writer.write(entry.date + "::" + entry.content);
                     writer.newLine();
