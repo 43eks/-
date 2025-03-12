@@ -31,9 +31,7 @@ public class DiaryappGUI {
     private JTextArea diaryContent;
     private Map<String, List<DiaryEntry>> diaryMap1 = new HashMap<>();
     private static final String FILE_NAME = "diary.txt";
-	private static final HashMap<Object, Object> diaryMap = null;
-
-    static class DiaryEntry {
+	static class DiaryEntry {
         String date;
         String content;
 
