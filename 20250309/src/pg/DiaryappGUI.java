@@ -1,7 +1,7 @@
 package pg;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
+import java.awt.event.ItemEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
@@ -17,7 +17,6 @@ import java.util.Map;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -34,10 +33,9 @@ public class DiaryappGUI {
     private DefaultTreeModel treeModel;
     private JTextArea diaryContent;
     private JComboBox<String> sortBox;
-    
     private Map<String, List<DiaryEntry>> diaryMap = new HashMap<>();
     private static final String FILE_NAME = "diary.txt";
-    private String currentSortOrder = "日付昇順"; // デフォルトのソート順
+    private String currentSortOrder = "日付昇順"; // 初期値は昇順
 
     static class DiaryEntry {
         String date;
@@ -69,16 +67,15 @@ public class DiaryappGUI {
         diaryContent.setWrapStyleWord(true);
         JScrollPane textScrollPane = new JScrollPane(diaryContent);
 
-        // 🔽 ソートボックス追加
-        sortBox = new JComboBox<>(new String[]{"日付昇順", "日付降順"});
-        sortBox.addActionListener(e -> {
-            currentSortOrder = (String) sortBox.getSelectedItem();
-            updateTree();
+        // 🔽 ソート順選択ボックス
+        String[] sortOptions = {"日付昇順", "日付降順"};
+        sortBox = new JComboBox<>(sortOptions);
+        sortBox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                currentSortOrder = (String) sortBox.getSelectedItem();
+                updateTree();
+            }
         });
-
-        JPanel sortPanel = new JPanel(new FlowLayout());
-        sortPanel.add(new JLabel("ソート順:"));
-        sortPanel.add(sortBox);
 
         // 🛠 ボタンパネル
         JButton addButton = new JButton("追加");
@@ -88,11 +85,11 @@ public class DiaryappGUI {
         deleteButton.addActionListener(e -> deleteDiaryEntry());
 
         JPanel buttonPanel = new JPanel();
+        buttonPanel.add(sortBox);
         buttonPanel.add(addButton);
         buttonPanel.add(deleteButton);
 
         // 📦 レイアウト設定
-        frame.add(sortPanel, BorderLayout.NORTH);
         frame.add(treeScrollPane, BorderLayout.WEST);
         frame.add(textScrollPane, BorderLayout.CENTER);
         frame.add(buttonPanel, BorderLayout.SOUTH);
@@ -106,7 +103,7 @@ public class DiaryappGUI {
     // 📖 選択した日記を表示
     private void displaySelectedDiary() {
         DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) diaryTree.getLastSelectedPathComponent();
-        if (selectedNode == null || selectedNode.getParent() == root) return; // 月は無視
+        if (selectedNode == null || selectedNode.getParent() == root) return;
 
         String date = selectedNode.toString();
         for (DiaryEntry entry : diaryMap.getOrDefault(getYearMonth(date), new ArrayList<>())) {
@@ -120,7 +117,10 @@ public class DiaryappGUI {
     // ➕ 日記を追加
     private void addDiaryEntry() {
         String date = JOptionPane.showInputDialog(frame, "📅 日付を入力 (例: 2025-03-12):");
-        if (date == null || date.trim().isEmpty() || date.length() < 7) return;
+        if (date == null || date.trim().isEmpty() || !date.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            JOptionPane.showMessageDialog(frame, "⚠️ 正しい日付形式（YYYY-MM-DD）で入力してください。");
+            return;
+        }
 
         String content = JOptionPane.showInputDialog(frame, "📝 日記の内容を入力:");
         if (content == null || content.trim().isEmpty()) return;
@@ -151,15 +151,18 @@ public class DiaryappGUI {
         }
     }
 
-    // 📅 日記をツリーに追加（ソート処理付き）
+    // 📅 ツリーの更新（年月フォルダもソート）
     private void updateTree() {
         root.removeAllChildren();
 
-        for (String yearMonth : diaryMap.keySet()) {
+        List<String> sortedYearMonths = new ArrayList<>(diaryMap.keySet());
+        sortedYearMonths.sort(currentSortOrder.equals("日付昇順") ? Comparator.naturalOrder() : Comparator.reverseOrder());
+
+        for (String yearMonth : sortedYearMonths) {
             DefaultMutableTreeNode monthNode = new DefaultMutableTreeNode(yearMonth);
 
             List<DiaryEntry> entries = new ArrayList<>(diaryMap.get(yearMonth));
-            sortEntries(entries); // ソート処理を適用
+            sortEntries(entries);
 
             for (DiaryEntry entry : entries) {
                 monthNode.add(new DefaultMutableTreeNode(entry.date));
@@ -170,13 +173,11 @@ public class DiaryappGUI {
         treeModel.reload();
     }
 
-    // 🔄 ソート処理
+    // 📋 日記エントリのソート
     private void sortEntries(List<DiaryEntry> entries) {
-        if (currentSortOrder.equals("日付昇順")) {
-            entries.sort(Comparator.comparing(entry -> entry.date));
-        } else if (currentSortOrder.equals("日付降順")) {
-            entries.sort(Comparator.comparing(entry -> entry.date, Comparator.reverseOrder()));
-        }
+        entries.sort(currentSortOrder.equals("日付昇順") ?
+                Comparator.comparing(e -> e.date) :
+                Comparator.comparing(e -> e.date, Comparator.reverseOrder()));
     }
 
     // 🔄 ファイルから日記を読み込む
@@ -185,9 +186,11 @@ public class DiaryappGUI {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split("::", 2);
-                if (parts.length == 2 && parts[0].length() >= 7) {
+                if (parts.length == 2) {
                     String date = parts[0];
                     String content = parts[1];
+                    if (date.length() < 10) continue; // データ不正防止
+
                     String yearMonth = getYearMonth(date);
 
                     diaryMap.putIfAbsent(yearMonth, new ArrayList<>());
