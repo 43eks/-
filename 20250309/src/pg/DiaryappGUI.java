@@ -1,11 +1,27 @@
 package pg;
 
-import javax.swing.*;
-import javax.swing.tree.*;
-import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 
 public class DiaryappGUI {
     private JFrame frame;
@@ -15,7 +31,6 @@ public class DiaryappGUI {
     private JTextArea diaryContent;
     private Map<String, List<DiaryEntry>> diaryMap = new HashMap<>();
     private static final String FILE_NAME = "diary.txt";
-	private static final HashMap<Object, Object> diaryMap = null;
 	private static final HashMap<Object, Object> diaryMap = null;
 
     static class DiaryEntry {
@@ -178,4 +193,4 @@ public class DiaryappGUI {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(DiaryappGUI::new);
     }
-}}
+}
