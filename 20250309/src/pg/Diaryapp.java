@@ -1,144 +1,65 @@
 package pg;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-// DiaryEntryクラス：1つの日記のエントリを表す
-class DiaryEntry {
-    private String date; // 日付
-    private String content; // 内容
-
-    // コンストラクタ：日付と内容を設定する
-    public DiaryEntry(String date, String content) {
-        this.date = date;
-        this.content = content;
-    }
-
-    // ゲッター：日付を取得
-    public String getDate() {
-        return date;
-    }
-
-    // ゲッター：内容を取得
-    public String getContent() {
-        return content;
-    }
-
-    // セッター：内容を更新
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    // 日記エントリを表示するためのtoStringメソッド
-    @Override
-    public String toString() {
-        return "日付: " + date + "\n" + "内容: " + content;
-    }
-}
-
-// DiaryAppクラス：日記アプリケーションのメインクラス
 public class Diaryapp {
-    private static final String FILE_NAME = "diary.txt"; // データを保存するファイル名
-    private static List<DiaryEntry> diaryEntries = new ArrayList<>(); // 日記リスト
+    private static final String FILE_NAME = "diary.txt";
+    private static List<DiaryEntry> diaryEntries = new ArrayList<>();
     private static Scanner scanner = new Scanner(System.in);
 
-    public static void main(String[] args) {
-        loadDiaryFromFile(); // アプリ起動時にファイルからデータを読み込む
+    // 📖 日記のデータ構造
+    static class DiaryEntry {
+        String date;
+        String content;
 
+        public DiaryEntry(String date, String content) {
+            this.date = date;
+            this.content = content;
+        }
+
+        @Override
+        public String toString() {
+            return date + ": " + content;
+        }
+    }
+
+    public static void main(String[] args) {
+        loadDiaryFromFile();
         while (true) {
-            System.out.println("\n日記アプリケーション");
-            System.out.println("1. 日記を追加");
-            System.out.println("2. すべての日記を表示");
-            System.out.println("3. 日記を編集");
+            System.out.println("\n📔 === 日記アプリ ===");
+            System.out.println("1. 日記を書く");
+            System.out.println("2. 日記を表示");
+            System.out.println("3. 日記を検索");
             System.out.println("4. 日記を削除");
             System.out.println("5. 終了");
-            System.out.print("オプションを選んでください: ");
-            int option = scanner.nextInt();
-            scanner.nextLine(); // 改行コードを消費
+            System.out.print("選択してください: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // バッファクリア
 
-            switch (option) {
-                case 1:
-                    addDiaryEntry();
-                    break;
-                case 2:
-                    viewAllEntries();
-                    break;
-                case 3:
-                    editDiaryEntry();
-                    break;
-                case 4:
-                    deleteDiaryEntry();
-                    break;
-                case 5:
-                    saveDiaryToFile(); // 終了時に日記をファイルに保存
-                    System.out.println("日記アプリケーションを終了します。");
+            switch (choice) {
+                case 1 -> addDiaryEntry();
+                case 2 -> listDiaryEntries();
+                case 3 -> searchDiaryEntries();
+                case 4 -> deleteDiaryEntry();
+                case 5 -> {
+                    saveDiaryToFile();
+                    System.out.println("📌 データを保存しました。終了します。");
                     return;
-                default:
-                    System.out.println("無効なオプションです。もう一度選んでください。");
+                }
+                default -> System.out.println("⚠️ 無効な入力です。もう一度選んでください。");
             }
         }
     }
 
-    // 日記を追加するメソッド
-    private static void addDiaryEntry() {
-        System.out.print("日付を入力してください (YYYY-MM-DD): ");
-        String date = scanner.nextLine();
-        System.out.print("内容を入力してください: ");
-        String content = scanner.nextLine();
-
-        DiaryEntry entry = new DiaryEntry(date, content);
-        diaryEntries.add(entry);
-        saveDiaryToFile(); // 追加後に保存
-        System.out.println("日記が追加されました！");
-    }
-
-    // すべての日記を表示するメソッド
-    private static void viewAllEntries() {
-        if (diaryEntries.isEmpty()) {
-            System.out.println("保存されている日記はありません。");
-            return;
-        }
-
-        for (DiaryEntry entry : diaryEntries) {
-            System.out.println("\n" + entry);
-        }
-    }
-
-    // 日記を編集するメソッド
-    private static void editDiaryEntry() {
-        System.out.print("編集したい日記の日付を入力してください (YYYY-MM-DD): ");
-        String date = scanner.nextLine();
-
-        DiaryEntry entry = findDiaryEntryByDate(date);
-        if (entry != null) {
-            System.out.print("新しい内容を入力してください: ");
-            String newContent = scanner.nextLine();
-            entry.setContent(newContent);
-            saveDiaryToFile(); // 編集後に保存
-            System.out.println("日記が更新されました！");
-        } else {
-            System.out.println("指定された日付の日記は見つかりませんでした。");
-        }
-    }
-
-    // 日記を削除するメソッド
-    private static void deleteDiaryEntry() {
-        System.out.print("削除したい日記の日付を入力してください (YYYY-MM-DD): ");
-        String date = scanner.nextLine();
-
-        DiaryEntry entry = findDiaryEntryByDate(date);
-        if (entry != null) {
-            diaryEntries.remove(entry);
-            saveDiaryToFile(); // 削除後に保存
-            System.out.println("日記が削除されました！");
-        } else {
-            System.out.println("指定された日付の日記は見つかりませんでした。");
-        }
-    }
-
-    // ファイルから日記を読み込むメソッド
+    // 🔄 ファイルから日記データを読み込む
     private static void loadDiaryFromFile() {
         try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
             String line;
@@ -149,31 +70,110 @@ public class Diaryapp {
                 }
             }
         } catch (FileNotFoundException e) {
-            System.out.println("データファイルが見つかりませんでした。新しいファイルを作成します。");
+            System.out.println("📂 新しい日記ファイルを作成します。");
         } catch (IOException e) {
-            System.out.println("ファイルの読み込み中にエラーが発生しました。");
+            System.out.println("⚠️ ファイルの読み込みエラー。");
         }
     }
 
-    // ファイルに日記を保存するメソッド
+    // 💾 ファイルに日記を保存
     private static void saveDiaryToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME))) {
             for (DiaryEntry entry : diaryEntries) {
-                writer.write(entry.getDate() + "::" + entry.getContent());
+                writer.write(entry.date + "::" + entry.content);
                 writer.newLine();
             }
         } catch (IOException e) {
-            System.out.println("ファイルの保存中にエラーが発生しました。");
+            System.out.println("⚠️ ファイル保存中にエラーが発生しました。");
         }
     }
 
-    // 日付で日記エントリを検索するメソッド
-    private static DiaryEntry findDiaryEntryByDate(String date) {
+    // ➕ 日記を追加
+    private static void addDiaryEntry() {
+        System.out.print("📅 日付を入力 (例: 2025-03-12): ");
+        String date = scanner.nextLine().trim();
+        if (date.isEmpty()) {
+            System.out.println("⚠️ 日付を入力してください。");
+            return;
+        }
+
+        System.out.print("📝 日記の内容を入力: ");
+        String content = scanner.nextLine().trim();
+        if (content.isEmpty()) {
+            System.out.println("⚠️ 内容を入力してください。");
+            return;
+        }
+
+        diaryEntries.add(new DiaryEntry(date, content));
+        saveDiaryToFile();
+        System.out.println("✅ 日記が追加されました！");
+    }
+
+    // 📜 日記を一覧表示
+    private static void listDiaryEntries() {
+        if (diaryEntries.isEmpty()) {
+            System.out.println("📭 日記がまだありません。");
+            return;
+        }
+
+        System.out.println("\n📖 あなたの日記一覧:");
+        for (int i = 0; i < diaryEntries.size(); i++) {
+            System.out.println((i + 1) + ". " + diaryEntries.get(i).date);
+        }
+
+        System.out.print("\n📌 詳細を表示する日記の番号を選択 (0で戻る): ");
+        int index = scanner.nextInt();
+        scanner.nextLine(); // バッファクリア
+
+        if (index > 0 && index <= diaryEntries.size()) {
+            System.out.println("\n📖 " + diaryEntries.get(index - 1).toString());
+        } else {
+            System.out.println("🔙 メニューに戻ります。");
+        }
+    }
+
+    // 🔍 日記を検索
+    private static void searchDiaryEntries() {
+        System.out.print("🔍 検索キーワードを入力 (日付または単語): ");
+        String keyword = scanner.nextLine().trim();
+
+        boolean found = false;
         for (DiaryEntry entry : diaryEntries) {
-            if (entry.getDate().equals(date)) {
-                return entry;
+            if (entry.date.contains(keyword) || entry.content.contains(keyword)) {
+                System.out.println("\n📖 " + entry.toString());
+                found = true;
             }
         }
-        return null;
+
+        if (!found) {
+            System.out.println("⚠️ 検索結果がありません。");
+        }
     }
-}}
+
+    // ❌ 日記を削除
+    private static void deleteDiaryEntry() {
+        if (diaryEntries.isEmpty()) {
+            System.out.println("📭 削除できる日記がありません。");
+            return;
+        }
+
+        listDiaryEntries();
+        System.out.print("\n🗑 削除する日記の番号を選択 (0でキャンセル): ");
+        int index = scanner.nextInt();
+        scanner.nextLine(); // バッファクリア
+
+        if (index > 0 && index <= diaryEntries.size()) {
+            System.out.print("⚠️ 本当に削除しますか？ (y/n): ");
+            String confirm = scanner.nextLine().trim().toLowerCase();
+            if (confirm.equals("y")) {
+                diaryEntries.remove(index - 1);
+                saveDiaryToFile();
+                System.out.println("🗑 日記を削除しました。");
+            } else {
+                System.out.println("🚫 削除をキャンセルしました。");
+            }
+        } else {
+            System.out.println("🔙 メニューに戻ります。");
+        }
+    }
+}
