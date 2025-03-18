@@ -130,6 +130,20 @@ public class RecipeSearchApp {
                 } else {
                     System.out.println("その名前のレシピは存在しません。");
                 }
+             // 検索履歴
+                List<String> searchHistory = new ArrayList<>();
+
+                // 検索したレシピを履歴に追加
+                System.out.println("\nレシピ名を入力して検索:");
+                String searchRecipe = scanner.nextLine();
+                searchHistory.add(searchRecipe);
+
+                // 検索履歴を表示
+                System.out.println("\n🔙 過去の検索履歴:");
+                for (String history : searchHistory) {
+                    System.out.println(history);
+                }
+                
             }
 
             // お気に入りレシピの表示
