@@ -1,5 +1,6 @@
 package pg;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,6 +68,9 @@ public class RecipeSearchApp {
         nutritionInfo.put("豆腐", "カロリー: 70 kcal, タンパク質: 8g, 脂質: 4g");
         nutritionInfo.put("だし", "カロリー: 10 kcal, タンパク質: 2g, 脂質: 0g");
 
+        // ユーザーのお気に入りレシピリスト
+        List<Recipe> favoriteRecipes = new ArrayList<>();
+
         // =============================
         // 食材の入力
         // =============================
@@ -102,10 +106,41 @@ public class RecipeSearchApp {
                 System.out.println("😢 該当するレシピが見つかりませんでした。");
             }
 
-            // 食材を追加するかどうかの確認
-            System.out.println("\n🍴 もう一度食材を追加しますか？(はい/いいえ):");
+            // お気に入りに追加するか尋ねる
+            System.out.println("\nこのレシピをお気に入りに追加しますか？(はい/いいえ):");
             String answer = scanner.nextLine();
             if (answer.equals("はい")) {
+                System.out.println("お気に入りに追加するレシピ名を入力してください:");
+                String favoriteRecipeName = scanner.nextLine();
+                Recipe favoriteRecipe = null;
+                for (Recipe recipe : recipes) {
+                    if (recipe.name.equals(favoriteRecipeName)) {
+                        favoriteRecipe = recipe;
+                        break;
+                    }
+                }
+                if (favoriteRecipe != null) {
+                    favoriteRecipes.add(favoriteRecipe);
+                    System.out.println(favoriteRecipeName + " がお気に入りに追加されました。");
+                } else {
+                    System.out.println("その名前のレシピは存在しません。");
+                }
+            }
+
+            // お気に入りレシピの表示
+            System.out.println("\n💖 お気に入りのレシピ:");
+            if (!favoriteRecipes.isEmpty()) {
+                for (Recipe recipe : favoriteRecipes) {
+                    recipe.display();
+                }
+            } else {
+                System.out.println("お気に入りレシピはありません。");
+            }
+
+            // 食材を追加するかどうかの確認
+            System.out.println("\n🍴 もう一度食材を追加しますか？(はい/いいえ):");
+            String moreIngredients = scanner.nextLine();
+            if (moreIngredients.equals("はい")) {
                 System.out.println("🛒 追加する食材をカンマ区切りで入力してください:");
                 input = scanner.nextLine();
                 userIngredients.addAll(Arrays.asList(input.split("\\s*,\\s*")));  // 追加した食材をセットに加える
