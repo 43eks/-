@@ -13,11 +13,13 @@ class Recipe {
     String name;
     List<String> ingredients;
     String instructions;
+    String category;  // カテゴリを追加
 
-    public Recipe(String name, List<String> ingredients, String instructions) {
+    public Recipe(String name, List<String> ingredients, String instructions, String category) {
         this.name = name;
         this.ingredients = ingredients;
         this.instructions = instructions;
+        this.category = category;
     }
 
     // レシピが与えられた食材で作れるか判定
@@ -42,20 +44,23 @@ class Recipe {
         System.out.println("\n🍽 レシピ: " + name);
         System.out.println("📌 材料: " + ingredients);
         System.out.println("📝 作り方: " + instructions);
+        System.out.println("🗂 カテゴリ: " + category);  // カテゴリも表示
     }
 }
 
 public class RecipeSearchApp {
-    public static void main(String[] args) {
+    private static final Recipe[] recipes = null;
+
+	public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
         // レシピデータ（仮のデータベース）
-        List<Recipe> recipes = Arrays.asList(
-            new Recipe("パンケーキ", Arrays.asList("卵", "牛乳", "小麦粉"), "材料を混ぜて焼く"),
-            new Recipe("オムレツ", Arrays.asList("卵", "牛乳", "塩"), "卵と牛乳を混ぜて焼く"),
-            new Recipe("フレンチトースト", Arrays.asList("卵", "牛乳", "パン"), "パンを卵液に浸して焼く"),
-            new Recipe("味噌汁", Arrays.asList("味噌", "豆腐", "だし"), "だし汁に味噌と具材を入れる")
-        );
+     //   List<Recipe> recipes = Arrays.asList(
+     //     new Recipe("パンケーキ", Arrays.asList("卵", "牛乳", "小麦粉"), "材料を混ぜて焼く"),
+     //     new Recipe("オムレツ", Arrays.asList("卵", "牛乳", "塩"), "卵と牛乳を混ぜて焼く"),
+     //     new Recipe("フレンチトースト", Arrays.asList("卵", "牛乳", "パン"), "パンを卵液に浸して焼く"),
+     //     new Recipe("味噌汁", Arrays.asList("味噌", "豆腐", "だし"), "だし汁に味噌と具材を入れる")
+     // );
 
         // 食材ごとの栄養情報 (仮のデータ)
         Map<String, String> nutritionInfo = new HashMap<>();
