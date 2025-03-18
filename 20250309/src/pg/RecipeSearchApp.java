@@ -1,8 +1,10 @@
 package pg;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -54,6 +56,17 @@ public class RecipeSearchApp {
             new Recipe("味噌汁", Arrays.asList("味噌", "豆腐", "だし"), "だし汁に味噌と具材を入れる")
         );
 
+        // 食材ごとの栄養情報 (仮のデータ)
+        Map<String, String> nutritionInfo = new HashMap<>();
+        nutritionInfo.put("卵", "カロリー: 70 kcal, タンパク質: 6g, 脂質: 5g");
+        nutritionInfo.put("牛乳", "カロリー: 60 kcal, タンパク質: 3g, 脂質: 3g");
+        nutritionInfo.put("小麦粉", "カロリー: 110 kcal, タンパク質: 3g, 脂質: 0.5g");
+        nutritionInfo.put("塩", "カロリー: 0 kcal, タンパク質: 0g, 脂質: 0g");
+        nutritionInfo.put("パン", "カロリー: 80 kcal, タンパク質: 3g, 脂質: 1g");
+        nutritionInfo.put("味噌", "カロリー: 40 kcal, タンパク質: 2g, 脂質: 1g");
+        nutritionInfo.put("豆腐", "カロリー: 70 kcal, タンパク質: 8g, 脂質: 4g");
+        nutritionInfo.put("だし", "カロリー: 10 kcal, タンパク質: 2g, 脂質: 0g");
+
         // =============================
         // 食材の入力
         // =============================
@@ -62,6 +75,18 @@ public class RecipeSearchApp {
         Set<String> userIngredients = new HashSet<>(Arrays.asList(input.split("\\s*,\\s*"))); // 食材をセットに変換
 
         while (true) {
+            // =============================
+            // 食材の栄養情報表示
+            // =============================
+            System.out.println("\n🍎 食材の栄養情報:");
+            for (String ingredient : userIngredients) {
+                if (nutritionInfo.containsKey(ingredient)) {
+                    System.out.println(ingredient + ": " + nutritionInfo.get(ingredient));
+                } else {
+                    System.out.println(ingredient + ": 栄養情報がありません。");
+                }
+            }
+
             // =============================
             // レシピ検索
             // =============================
