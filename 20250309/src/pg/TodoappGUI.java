@@ -15,8 +15,10 @@ import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
@@ -29,27 +31,42 @@ public class TodoappGUI {
     private JList<Task> todoList;
     private DefaultListModel<Task> todoListModel;
     private List<Task> tasks;
-	private String name;
+    private JComboBox<String> categoryComboBox;
+    private JComboBox<String> filterComboBox;
 
     public TodoappGUI() {
-        tasks = loadTasksFromFile();  // アプリ起動時にタスクをロード
+        tasks = loadTasksFromFile();
         frame = new JFrame("Todoリストアプリ");
-        frame.setSize(400, 400);
+        frame.setSize(500, 500);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
 
         // タスクリストを表示するためのリストモデルとJList
-        todoListModel = new DefaultListModel<>();  // 初期化
+        todoListModel = new DefaultListModel<>();
         todoList = new JList<>(todoListModel);
         todoList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        // スクロールペインを使ってリストをスクロール可能に
         JScrollPane scrollPane = new JScrollPane(todoList);
         frame.add(scrollPane, BorderLayout.CENTER);
 
+        // カテゴリ選択用のコンボボックス
+        String[] categories = {"仕事", "勉強", "買い物", "趣味", "その他"};
+        categoryComboBox = new JComboBox<>(categories);
+        frame.add(categoryComboBox, BorderLayout.WEST);
+
+        // フィルタリング用のコンボボックス
+        String[] filterCategories = {"すべて", "仕事", "勉強", "買い物", "趣味", "その他"};
+        filterComboBox = new JComboBox<>(filterCategories);
+        filterComboBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String selectedCategory = (String) filterComboBox.getSelectedItem();
+                filterTasksByCategory(selectedCategory);
+            }
+        });
+        frame.add(filterComboBox, BorderLayout.NORTH);
+
         // タスク入力フィールド
         taskField = new JTextField();
-        frame.add(taskField, BorderLayout.NORTH);
+        frame.add(taskField, BorderLayout.SOUTH);
 
         // ボタンパネル
         JPanel buttonPanel = new JPanel();
@@ -62,23 +79,6 @@ public class TodoappGUI {
                 addTask();
             }
         });
-     // 「削除」ボタン
-        JButton deleteButton = new JButton("タスクを削除");
-        deleteButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                deleteTask();
-            }
-        });
-        
-     // 「編集」ボタン
-        JButton editButton = new JButton("タスクを編集");
-        editButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                editTask();
-            }
-        });
-        buttonPanel.add(editButton);
-        buttonPanel.add(deleteButton);
         buttonPanel.add(addButton);
 
         // 「完了」ボタン
@@ -90,6 +90,24 @@ public class TodoappGUI {
         });
         buttonPanel.add(completeButton);
 
+        // 「削除」ボタン
+        JButton deleteButton = new JButton("タスクを削除");
+        deleteButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                deleteTask();
+            }
+        });
+        buttonPanel.add(deleteButton);
+
+        // 「編集」ボタン
+        JButton editButton = new JButton("タスクを編集");
+        editButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                editTask();
+            }
+        });
+        buttonPanel.add(editButton);
+
         // 「保存」ボタン
         JButton saveButton = new JButton("タスクを保存");
         saveButton.addActionListener(new ActionListener() {
@@ -100,61 +118,68 @@ public class TodoappGUI {
         buttonPanel.add(saveButton);
 
         frame.add(buttonPanel, BorderLayout.SOUTH);
-
-        // 既存のタスクをロード
         loadTasks();
     }
 
     private void loadTasks() {
-        todoListModel.clear();  // 既存のタスクをクリア
+        todoListModel.clear();
         for (Task task : tasks) {
-            todoListModel.addElement(task);  // タスクをリストに追加
+            todoListModel.addElement(task);
         }
     }
 
     private void addTask() {
         String taskName = taskField.getText().trim();
+        String category = (String) categoryComboBox.getSelectedItem();
+
         if (!taskName.isEmpty()) {
-            Task task = new Task(taskName);
+            Task task = new Task(taskName, category);
             tasks.add(task);
             todoListModel.addElement(task);
             taskField.setText("");
-            saveTasksToFile();  // タスクをファイルに保存
+            saveTasksToFile();
         }
-    }
-    private void deleteTask() {
-        int selectedIndex = todoList.getSelectedIndex(); // 選択されたタスクのインデックスを取得
-        if (selectedIndex != -1) {
-            tasks.remove(selectedIndex); // リストから削除
-            todoListModel.remove(selectedIndex); // GUIのリストから削除
-            saveTasksToFile(); // 削除後にファイルを更新
-        }
-    }
-    private void editTask() {
-        int selectedIndex = todoList.getSelectedIndex(); // 選択されたタスクのインデックス
-        if (selectedIndex != -1) {
-            Task selectedTask = tasks.get(selectedIndex);
-            String newTaskName = taskField.getText().trim(); // 新しいタスク名を取得
-
-            if (!newTaskName.isEmpty()) {
-                selectedTask.setName(newTaskName); // タスク名を変更
-                todoList.repaint(); // GUIのリストを更新
-                saveTasksToFile(); // 変更をファイルに保存
-                taskField.setText(""); // 入力フィールドをクリア
-            }
-        }
-    }
-    public void setName(String name) {
-        this.name = name;
     }
 
     private void markTaskAsCompleted() {
         int selectedIndex = todoList.getSelectedIndex();
         if (selectedIndex != -1) {
             Task selectedTask = todoListModel.getElementAt(selectedIndex);
-            selectedTask.setCompleted(true);  // タスクを完了に設定
-            todoList.repaint();  // JListを再描画
-            saveTasksToFile();  // タスクをファイルに保存
+            selectedTask.setCompleted(true);
+            todoList.repaint();
+            saveTasksToFile();
+        }
+    }
+
+    private void deleteTask() {
+        int selectedIndex = todoList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            Task selectedTask = todoListModel.getElementAt(selectedIndex);
+            tasks.remove(selectedTask);
+            todoListModel.remove(selectedIndex);
+            saveTasksToFile();
+        }
+    }
+
+    private void editTask() {
+        int selectedIndex = todoList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            Task selectedTask = todoListModel.getElementAt(selectedIndex);
+            String newTaskName = JOptionPane.showInputDialog(frame, "新しいタスク名を入力:", selectedTask.getName());
+            if (newTaskName != null && !newTaskName.trim().isEmpty()) {
+                selectedTask.setName(newTaskName);
+                todoList.repaint();
+                saveTasksToFile();
+            }
+        }
+    }
+
+    private void filterTasksByCategory(String category) {
+        todoListModel.clear();
+        for (Task task : tasks) {
+            if (task.getCategory().equals(category) || category.equals("すべて")) {
+                todoListModel.addElement(task);
+            }
         }
     }
 
@@ -171,7 +196,6 @@ public class TodoappGUI {
         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("tasks.dat"))) {
             loadedTasks = (List<Task>) in.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            // ファイルが存在しない場合や読み込みエラーを無視
             e.printStackTrace();
         }
         return loadedTasks;
@@ -181,23 +205,28 @@ public class TodoappGUI {
         frame.setVisible(true);
     }
 
-    // Taskクラス（タスクの情報を保持）
+    // タスククラス
     public static class Task implements Serializable {
         private String name;
+        private String category;
         private boolean isCompleted;
 
-        public Task(String name) {
+        public Task(String name, String category) {
             this.name = name;
+            this.category = category;
             this.isCompleted = false;
         }
 
-        public void setName(String newTaskName) {
-			// TODO 自動生成されたメソッド・スタブ
-			
-		}
-
-		public String getName() {
+        public String getName() {
             return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getCategory() {
+            return category;
         }
 
         public boolean isCompleted() {
@@ -210,7 +239,7 @@ public class TodoappGUI {
 
         @Override
         public String toString() {
-            return (isCompleted ? "[完了]" : "[未完了]") + " " + name;
+            return (isCompleted ? "[完了]" : "[未完了]") + " [" + category + "] " + name;
         }
     }
 
