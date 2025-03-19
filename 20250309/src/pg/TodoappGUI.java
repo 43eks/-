@@ -48,7 +48,7 @@ public class TodoappGUI {
         JScrollPane scrollPane = new JScrollPane(todoList);
         frame.add(scrollPane, BorderLayout.CENTER);
 
-        // カテゴリ選択用のコンボボックス
+        // カテゴリ選択用のコンボボックス（タスク追加用）
         String[] categories = {"仕事", "勉強", "買い物", "趣味", "その他"};
         categoryComboBox = new JComboBox<>(categories);
         frame.add(categoryComboBox, BorderLayout.WEST);
@@ -58,8 +58,7 @@ public class TodoappGUI {
         filterComboBox = new JComboBox<>(filterCategories);
         filterComboBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                String selectedCategory = (String) filterComboBox.getSelectedItem();
-                filterTasksByCategory(selectedCategory);
+                filterTasksByCategory((String) filterComboBox.getSelectedItem());
             }
         });
         frame.add(filterComboBox, BorderLayout.NORTH);
@@ -74,47 +73,27 @@ public class TodoappGUI {
 
         // 「追加」ボタン
         JButton addButton = new JButton("タスクを追加");
-        addButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                addTask();
-            }
-        });
+        addButton.addActionListener(e -> addTask());
         buttonPanel.add(addButton);
 
         // 「完了」ボタン
         JButton completeButton = new JButton("タスクを完了");
-        completeButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                markTaskAsCompleted();
-            }
-        });
+        completeButton.addActionListener(e -> markTaskAsCompleted());
         buttonPanel.add(completeButton);
 
         // 「削除」ボタン
         JButton deleteButton = new JButton("タスクを削除");
-        deleteButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                deleteTask();
-            }
-        });
+        deleteButton.addActionListener(e -> deleteTask());
         buttonPanel.add(deleteButton);
 
         // 「編集」ボタン
         JButton editButton = new JButton("タスクを編集");
-        editButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                editTask();
-            }
-        });
+        editButton.addActionListener(e -> editTask());
         buttonPanel.add(editButton);
 
         // 「保存」ボタン
         JButton saveButton = new JButton("タスクを保存");
-        saveButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                saveTasksToFile();
-            }
-        });
+        saveButton.addActionListener(e -> saveTasksToFile());
         buttonPanel.add(saveButton);
 
         frame.add(buttonPanel, BorderLayout.SOUTH);
@@ -177,7 +156,7 @@ public class TodoappGUI {
     private void filterTasksByCategory(String category) {
         todoListModel.clear();
         for (Task task : tasks) {
-            if (task.getCategory().equals(category) || category.equals("すべて")) {
+            if (category.equals("すべて") || task.getCategory().equals(category)) {
                 todoListModel.addElement(task);
             }
         }
@@ -217,25 +196,11 @@ public class TodoappGUI {
             this.isCompleted = false;
         }
 
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getCategory() {
-            return category;
-        }
-
-        public boolean isCompleted() {
-            return isCompleted;
-        }
-
-        public void setCompleted(boolean completed) {
-            isCompleted = completed;
-        }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getCategory() { return category; }
+        public boolean isCompleted() { return isCompleted; }
+        public void setCompleted(boolean completed) { isCompleted = completed; }
 
         @Override
         public String toString() {
@@ -244,11 +209,9 @@ public class TodoappGUI {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                TodoappGUI todoApp = new TodoappGUI();
-                todoApp.display();
-            }
+        SwingUtilities.invokeLater(() -> {
+            TodoappGUI todoApp = new TodoappGUI();
+            todoApp.display();
         });
     }
 }
