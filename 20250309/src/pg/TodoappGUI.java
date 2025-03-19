@@ -2,15 +2,17 @@ package pg;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
@@ -34,6 +36,8 @@ public class TodoappGUI {
     private JComboBox<String> categoryComboBox;
     private JComboBox<String> filterComboBox;
 
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
     public TodoappGUI() {
         tasks = loadTasksFromFile();
         frame = new JFrame("Todoリストアプリ");
@@ -41,26 +45,22 @@ public class TodoappGUI {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
 
-        // タスクリストを表示するためのリストモデルとJList
+        // タスクリスト
         todoListModel = new DefaultListModel<>();
         todoList = new JList<>(todoListModel);
         todoList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(todoList);
         frame.add(scrollPane, BorderLayout.CENTER);
 
-        // カテゴリ選択用のコンボボックス（タスク追加用）
+        // カテゴリ選択コンボボックス
         String[] categories = {"仕事", "勉強", "買い物", "趣味", "その他"};
         categoryComboBox = new JComboBox<>(categories);
         frame.add(categoryComboBox, BorderLayout.WEST);
 
-        // フィルタリング用のコンボボックス
+        // フィルタリング用コンボボックス
         String[] filterCategories = {"すべて", "仕事", "勉強", "買い物", "趣味", "その他"};
         filterComboBox = new JComboBox<>(filterCategories);
-        filterComboBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                filterTasksByCategory((String) filterComboBox.getSelectedItem());
-            }
-        });
+        filterComboBox.addActionListener(e -> filterTasksByCategory((String) filterComboBox.getSelectedItem()));
         frame.add(filterComboBox, BorderLayout.NORTH);
 
         // タスク入力フィールド
@@ -71,28 +71,27 @@ public class TodoappGUI {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout());
 
-        // 「追加」ボタン
         JButton addButton = new JButton("タスクを追加");
         addButton.addActionListener(e -> addTask());
         buttonPanel.add(addButton);
 
-        // 「完了」ボタン
-        JButton completeButton = new JButton("タスクを完了");
+        JButton completeButton = new JButton("完了");
         completeButton.addActionListener(e -> markTaskAsCompleted());
         buttonPanel.add(completeButton);
 
-        // 「削除」ボタン
-        JButton deleteButton = new JButton("タスクを削除");
+        JButton deleteButton = new JButton("削除");
         deleteButton.addActionListener(e -> deleteTask());
         buttonPanel.add(deleteButton);
 
-        // 「編集」ボタン
-        JButton editButton = new JButton("タスクを編集");
+        JButton editButton = new JButton("編集");
         editButton.addActionListener(e -> editTask());
         buttonPanel.add(editButton);
 
-        // 「保存」ボタン
-        JButton saveButton = new JButton("タスクを保存");
+        JButton deadlineButton = new JButton("期日変更");
+        deadlineButton.addActionListener(e -> changeTaskDeadline());
+        buttonPanel.add(deadlineButton);
+
+        JButton saveButton = new JButton("保存");
         saveButton.addActionListener(e -> saveTasksToFile());
         buttonPanel.add(saveButton);
 
@@ -102,6 +101,7 @@ public class TodoappGUI {
 
     private void loadTasks() {
         todoListModel.clear();
+        sortTasksByDeadline();
         for (Task task : tasks) {
             todoListModel.addElement(task);
         }
@@ -112,9 +112,13 @@ public class TodoappGUI {
         String category = (String) categoryComboBox.getSelectedItem();
 
         if (!taskName.isEmpty()) {
-            Task task = new Task(taskName, category);
+            String deadlineStr = JOptionPane.showInputDialog(frame, "期日を入力 (YYYY-MM-DD):");
+            Date deadline = parseDate(deadlineStr);
+
+            Task task = new Task(taskName, category, deadline);
             tasks.add(task);
-            todoListModel.addElement(task);
+            sortTasksByDeadline();
+            loadTasks();
             taskField.setText("");
             saveTasksToFile();
         }
@@ -153,6 +157,21 @@ public class TodoappGUI {
         }
     }
 
+    private void changeTaskDeadline() {
+        int selectedIndex = todoList.getSelectedIndex();
+        if (selectedIndex != -1) {
+            Task selectedTask = todoListModel.getElementAt(selectedIndex);
+            String newDeadlineStr = JOptionPane.showInputDialog(frame, "新しい期日を入力 (YYYY-MM-DD):");
+            Date newDeadline = parseDate(newDeadlineStr);
+            if (newDeadline != null) {
+                selectedTask.setDeadline(newDeadline);
+                sortTasksByDeadline();
+                loadTasks();
+                saveTasksToFile();
+            }
+        }
+    }
+
     private void filterTasksByCategory(String category) {
         todoListModel.clear();
         for (Task task : tasks) {
@@ -160,6 +179,10 @@ public class TodoappGUI {
                 todoListModel.addElement(task);
             }
         }
+    }
+
+    private void sortTasksByDeadline() {
+        tasks.sort(Comparator.comparing(Task::getDeadline, Comparator.nullsLast(Comparator.naturalOrder())));
     }
 
     private void saveTasksToFile() {
@@ -180,20 +203,29 @@ public class TodoappGUI {
         return loadedTasks;
     }
 
+    private Date parseDate(String dateStr) {
+        try {
+            return dateStr == null ? null : dateFormat.parse(dateStr);
+        } catch (ParseException e) {
+            return null;
+        }
+    }
+
     public void display() {
         frame.setVisible(true);
     }
 
-    // タスククラス
     public static class Task implements Serializable {
         private String name;
         private String category;
         private boolean isCompleted;
+        private Date deadline;
 
-        public Task(String name, String category) {
+        public Task(String name, String category, Date deadline) {
             this.name = name;
             this.category = category;
             this.isCompleted = false;
+            this.deadline = deadline;
         }
 
         public String getName() { return name; }
@@ -201,17 +233,16 @@ public class TodoappGUI {
         public String getCategory() { return category; }
         public boolean isCompleted() { return isCompleted; }
         public void setCompleted(boolean completed) { isCompleted = completed; }
+        public Date getDeadline() { return deadline; }
+        public void setDeadline(Date deadline) { this.deadline = deadline; }
 
         @Override
         public String toString() {
-            return (isCompleted ? "[完了]" : "[未完了]") + " [" + category + "] " + name;
+            return (isCompleted ? "[完了]" : "[未完了]") + " [" + category + "] " + name + " (期限: " + (deadline == null ? "なし" : new SimpleDateFormat("yyyy-MM-dd").format(deadline)) + ")";
         }
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            TodoappGUI todoApp = new TodoappGUI();
-            todoApp.display();
-        });
+        SwingUtilities.invokeLater(() -> new TodoappGUI().display());
     }
 }
