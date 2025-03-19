@@ -29,6 +29,7 @@ public class TodoappGUI {
     private JList<Task> todoList;
     private DefaultListModel<Task> todoListModel;
     private List<Task> tasks;
+	private String name;
 
     public TodoappGUI() {
         tasks = loadTasksFromFile();  // アプリ起動時にタスクをロード
@@ -142,6 +143,9 @@ public class TodoappGUI {
                 taskField.setText(""); // 入力フィールドをクリア
             }
         }
+    }
+    public void setName(String name) {
+        this.name = name;
     }
 
     private void markTaskAsCompleted() {
