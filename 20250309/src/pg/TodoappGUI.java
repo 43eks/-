@@ -61,6 +61,14 @@ public class TodoappGUI {
                 addTask();
             }
         });
+     // 「削除」ボタン
+        JButton deleteButton = new JButton("タスクを削除");
+        deleteButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                deleteTask();
+            }
+        });
+        buttonPanel.add(deleteButton);
         buttonPanel.add(addButton);
 
         // 「完了」ボタン
@@ -102,6 +110,14 @@ public class TodoappGUI {
             todoListModel.addElement(task);
             taskField.setText("");
             saveTasksToFile();  // タスクをファイルに保存
+        }
+    }
+    private void deleteTask() {
+        int selectedIndex = todoList.getSelectedIndex(); // 選択されたタスクのインデックスを取得
+        if (selectedIndex != -1) {
+            tasks.remove(selectedIndex); // リストから削除
+            todoListModel.remove(selectedIndex); // GUIのリストから削除
+            saveTasksToFile(); // 削除後にファイルを更新
         }
     }
 
