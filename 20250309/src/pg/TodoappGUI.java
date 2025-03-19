@@ -68,6 +68,15 @@ public class TodoappGUI {
                 deleteTask();
             }
         });
+        
+     // 「編集」ボタン
+        JButton editButton = new JButton("タスクを編集");
+        editButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                editTask();
+            }
+        });
+        buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
         buttonPanel.add(addButton);
 
@@ -120,6 +129,20 @@ public class TodoappGUI {
             saveTasksToFile(); // 削除後にファイルを更新
         }
     }
+    private void editTask() {
+        int selectedIndex = todoList.getSelectedIndex(); // 選択されたタスクのインデックス
+        if (selectedIndex != -1) {
+            Task selectedTask = tasks.get(selectedIndex);
+            String newTaskName = taskField.getText().trim(); // 新しいタスク名を取得
+
+            if (!newTaskName.isEmpty()) {
+                selectedTask.setName(newTaskName); // タスク名を変更
+                todoList.repaint(); // GUIのリストを更新
+                saveTasksToFile(); // 変更をファイルに保存
+                taskField.setText(""); // 入力フィールドをクリア
+            }
+        }
+    }
 
     private void markTaskAsCompleted() {
         int selectedIndex = todoList.getSelectedIndex();
@@ -164,7 +187,12 @@ public class TodoappGUI {
             this.isCompleted = false;
         }
 
-        public String getName() {
+        public void setName(String newTaskName) {
+			// TODO 自動生成されたメソッド・スタブ
+			
+		}
+
+		public String getName() {
             return name;
         }
 
